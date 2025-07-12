@@ -17,11 +17,11 @@ router.post('/webhook', async (req, res) => {
   if (!user) {
     user = await User.create({ phone, setupStep: 'welcome' });
     return res.send(`<Response><Message>
-🌟 *Welcome to FundMe!*
+💰 *Welcome to SaveMe!*
 
-I help you request financial assistance from your network in a respectful, organized way.
+I help you save money by sending you regular reminders to "pay yourself first" - treating savings like a non-negotiable expense.
 
-Ready to get started? Just reply with *START* 🚀
+Ready to start building your savings habit? Just reply with *START* 🚀
     </Message></Response>`);
   }
 
@@ -35,13 +35,13 @@ Ready to get started? Just reply with *START* 🚀
       return res.send(`<Response><Message>
 🎉 *Great! Let's set you up in 3 easy steps:*
 
-*Step 1 of 3: Your Bank Account* 🏦
-Please send your bank details in this format:
+*Step 1 of 3: Your Savings Account* 🏦
+Please send your savings account details in this format:
 👉 *BankName AccountNumber*
 
 Example: *GTBank 1234567890*
 
-This helps people know where to send help.
+This is where you'll transfer your "payment to yourself" each time.
       </Message></Response>`);
     } else {
       return res.send(`<Response><Message>✅ You're already verified! Type *HELP* to see available commands.</Message></Response>`);
@@ -72,11 +72,11 @@ Need help? Just ask! 😊
     user.status = 'paused';
     await user.save();
     return res.send(`<Response><Message>
-⏸️ *Paused Successfully*
+⏸️ *Savings Reminders Paused*
 
-You won't receive any new funding requests until you resume.
+You won't receive any new savings reminders until you resume.
 
-Type *RESUME* when you're ready to continue.
+Type *RESUME* when you're ready to continue building your savings habit.
     </Message></Response>`);
   }
 
@@ -84,9 +84,9 @@ Type *RESUME* when you're ready to continue.
     user.status = 'active';
     await user.save();
     return res.send(`<Response><Message>
-▶️ *Resumed Successfully*
+▶️ *Savings Reminders Resumed*
 
-You'll start receiving funding requests again based on your settings.
+You'll start receiving savings reminders again based on your settings.
 
 Type *SETTINGS* to review your current setup.
     </Message></Response>`);
@@ -133,14 +133,14 @@ Choose what feels comfortable for you.
       return res.send(`<Response><Message>
 ✅ *Frequency set to every ${hours} hours*
 
-*Step 3 of 3: Amount Range* 💰
-What's your preferred assistance range?
+*Step 3 of 3: Savings Amount Range* 💰
+What's your preferred savings amount range?
 
 Send two amounts separated by a space:
-👉 *3000 8000* (between ₦3,000 and ₦8,000)
-👉 *5000 15000* (between ₦5,000 and ₦15,000)
+👉 *1000 5000* (between ₦1,000 and ₦5,000)
+👉 *2000 10000* (between ₦2,000 and ₦10,000)
 
-Choose amounts that work for your network.
+Choose amounts that fit your budget and goals.
       </Message></Response>`);
     } else {
       return res.send(`<Response><Message>
@@ -171,7 +171,7 @@ Example: *48* for every 2 days
 ✅ Frequency: Every ${user.frequencyHours} hours
 ✅ Range: ₦${rangeMin.toLocaleString()} – ₦${rangeMax.toLocaleString()}
 
-You're all set! I'll start sending respectful requests to your network.
+You're all set! I'll start sending you savings reminders to "pay yourself first" 💪
 
 Type *HELP* to see available commands.
       </Message></Response>`);
@@ -187,7 +187,7 @@ Example: *3000 8000*
   // Advanced settings commands (after setup)
   if (msg === 'SETTINGS' || msg === 'SHOW SETTINGS') {
     return res.send(`<Response><Message>
-📋 *Your Current Settings:*
+📋 *Your Current Savings Settings:*
 
 🏦 Account: ${user.account || 'Not set'}
 💰 Range: ₦${user.rangeMin?.toLocaleString() || 'Not set'} – ₦${user.rangeMax?.toLocaleString() || 'Not set'}
@@ -293,25 +293,25 @@ If you believe this is an error, please contact support.
       await user.save();
       
       return res.send(`<Response><Message>
-✅ *Receipt Verified!*
+✅ *Transfer Receipt Verified!*
 
-Thank you for the confirmation. Your transaction has been recorded.
+Thank you for confirming your savings transfer! Your discipline is paying off.
 
-🙏 We appreciate your transparency!
+🎯 Keep up the great work building your financial future!
       </Message></Response>`);
     } else {
       lastTx.status = 'failed';
       await lastTx.save();
       
       return res.send(`<Response><Message>
-❌ *Receipt verification failed*
+❌ *Transfer verification failed*
 
 Please ensure:
-• The amount matches your request
-• Your account number is visible
+• The amount matches your savings goal
+• Your account number is visible  
 • The image is clear and readable
 
-Try uploading again or contact support if issues persist.
+Try uploading again - every bit of savings counts! 💪
       </Message></Response>`);
     }
   }
@@ -320,7 +320,7 @@ Try uploading again or contact support if issues persist.
   return res.send(`<Response><Message>
 🤔 I didn't understand that command.
 
-Type *HELP* to see available options or send a receipt image to verify a transaction.
+Type *HELP* to see available options or send a transfer receipt image to verify your savings.
   </Message></Response>`);
 });
 
