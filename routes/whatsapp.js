@@ -267,51 +267,109 @@ Type *HELP* if you need assistance! 😊
 
   // Handle receipt upload
   if (mediaUrl) {
-    const imagePath = `./data/receipt-${user.phone}.jpg`;
-    const response = await axios.get(mediaUrl, { responseType: 'arraybuffer' });
-    const fs = require('fs');
-    fs.writeFileSync(imagePath, response.data);
-
-    const text = await extractTextFromImage(imagePath);
-    const lastTx = await Transaction.findOne({ user: user._id, status: 'pending' }).sort({ createdAt: -1 });
-
-    if (!lastTx) {
-      return res.send(`<Response><Message>
-❌ No pending transaction found.
-
-If you believe this is an error, please contact support.
-      </Message></Response>`);
-    }
-
-    const isValid = verifyReceiptText(text, lastTx.amount, user.account.split(' ')[1]);
-
-    if (isValid) {
-      lastTx.status = 'verified';
-      lastTx.receiptPath = imagePath;
-      await lastTx.save();
-      user.lastAmount = null;
-      await user.save();
+    try {
+      // Create data directory if it doesn't exist
+      const fs = require('fs');
+      const path = require('path');
+      const axios = require('axios');
       
-      return res.send(`<Response><Message>
+      const dataDir = './data';
+      if (!fs.existsSync(dataDir)) {
+        fs.mkdirSync(dataDir, { recursive: true });
+      }
+
+      const imagePath = path.join(dataDir, `receipt-${user.phone}-${Date.now()}.jpg`);
+      
+      // Download the image
+      const response = await axios.get(mediaUrl, { 
+        responseType: 'arraybuffer',
+        timeout: 10000 // 10 second timeout
+      });
+      
+      fs.writeFileSync(imagePath, response.data);
+
+      // Find the most recent pending transaction
+      const lastTx = await Transaction.findOne({ 
+        user: user._id, 
+        status: 'pending' 
+      }).sort({ createdAt: -1 });
+
+      if (!lastTx) {
+        return res.send(`<Response><Message>
+❌ *No pending savings reminder found*
+
+I don't see any recent savings reminders waiting for confirmation.
+
+Type *STATUS* to check your current savings status.
+        </Message></Response>`);
+      }
+
+      // Extract text from image
+      const text = await extractTextFromImage(imagePath);
+      
+      if (!text || text.trim().length === 0) {
+        return res.send(`<Response><Message>
+❌ *Could not read the receipt*
+
+Please ensure:
+• The image is clear and well-lit
+• Text is visible and not blurry
+• The receipt is fully in frame
+
+Try taking another photo! 📸
+        </Message></Response>`);
+      }
+
+      // Verify receipt
+      const accountNumber = user.account ? user.account.split(' ')[1] : null;
+      const isValid = accountNumber && verifyReceiptText(text, lastTx.amount, accountNumber);
+
+      if (isValid) {
+        lastTx.status = 'verified';
+        lastTx.receiptPath = imagePath;
+        await lastTx.save();
+        
+        // Clear any pending amount
+        user.lastAmount = null;
+        await user.save();
+        
+        return res.send(`<Response><Message>
 ✅ *Transfer Receipt Verified!*
+
+Amount: ₦${lastTx.amount.toLocaleString()}
+Date: ${new Date().toLocaleDateString()}
 
 Thank you for confirming your savings transfer! Your discipline is paying off.
 
 🎯 Keep up the great work building your financial future!
-      </Message></Response>`);
-    } else {
-      lastTx.status = 'failed';
-      await lastTx.save();
-      
-      return res.send(`<Response><Message>
+        </Message></Response>`);
+      } else {
+        lastTx.status = 'failed';
+        await lastTx.save();
+        
+        return res.send(`<Response><Message>
 ❌ *Transfer verification failed*
 
+Expected: ₦${lastTx.amount.toLocaleString()} to account ending in ${accountNumber ? accountNumber.slice(-4) : 'N/A'}
+
 Please ensure:
-• The amount matches your savings goal
-• Your account number is visible  
+• The amount matches exactly: ₦${lastTx.amount.toLocaleString()}
+• Your account number is visible
 • The image is clear and readable
 
 Try uploading again - every bit of savings counts! 💪
+        </Message></Response>`);
+      }
+
+    } catch (error) {
+      console.error('Receipt processing error:', error);
+      
+      return res.send(`<Response><Message>
+❌ *Error processing receipt*
+
+Sorry, there was a technical issue processing your receipt.
+
+Please try again or contact support if the problem persists.
       </Message></Response>`);
     }
   }
