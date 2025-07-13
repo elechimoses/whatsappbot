@@ -102,7 +102,7 @@ Don't worry, it only takes a minute! 😊
   }
 
   // Step-by-step setup flow
-  if (user.setupStep === 'account' && msg.match(/\w+\s+\d{10}/)) {
+  if (user.setupStep === 'account' && msg.match(/^(\w+)\s+(\d{10})$/)) {
     user.account = originalText;
     user.setupStep = 'frequency';
     await user.save();
@@ -213,7 +213,7 @@ Example: *EDIT FREQUENCY 24*
   // Handle edit commands
   if (msg.startsWith('EDIT ACCOUNT')) {
     const accountMatch = originalText.match(/EDIT ACCOUNT\s+(.+)/i);
-    if (accountMatch && accountMatch[1].match(/\w+\s+\d{10}/)) {
+    if (accountMatch && accountMatch[1].match(/^(\w+)\s+(\d{10})$/)) {
       user.account = accountMatch[1];
       await user.save();
       return res.send(`<Response><Message>✅ Account updated to: ${user.account}</Message></Response>`);
